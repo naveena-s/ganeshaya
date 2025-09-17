@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chit Fund Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- mobile scaling -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+    }
+    header {
+      text-align: center;
+      padding: 16px;
+      background: #ff6633;
+      /*color: white;*/
+      font-size: 20px;
+      font-weight: bold;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      background: #fff;
+      border-bottom: 1px solid #ccc;
+    }
+    nav button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      background: #ffeae4;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 0.5rem;
+      border-radius: 0.25rem;
+    }
+    nav button.active-btn {
+      background: #ffb095;
+      color: white;
+      font-weight: bold;
+    }
+    .tab {
+      display: none;
+      padding: 12px;
+    }
+    .active {
+      display: block;
+    }
+    .summary {
+      text-align: center;
+      font-size: 16px;
+      margin: 16px 0;
+    }
+    .summary p {
+      margin: 6px 0;
+    }
+    .chart-container {
+      max-width: 90%;
+      margin: 0 auto 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background: #eee;
+    }
+    .table-wrapper {
+      overflow-x: auto; /* scrollable on small screens */
+    }
+
+    body {
+      font-family: "Noto Sans Kannada", sans-serif;
+      line-height: 1.6;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1, h2 {
+      color: #2c3e50;
+    }
+    h1 {
+      text-align: center;
+    }
+    ul {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    table, th, td {
+      border: 1px solid #aaa;
+    }
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #eee;
+    }
+    .note {
+      background-color: #fffae6;
+      padding: 10px;
+      border-left: 4px solid #ffc107;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+<header>ಓಂ ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ</header>
+
+<nav>
+  <button onclick="showTab('home')" class="active-btn">Home</button>
+  <button onclick="showTab('contributions')">Members</button>
+  <button onclick="showTab('loanLedger')">Loans</button>
+  <button onclick="showTab('balanceSheet')">Balance</button>
+</nav>
+
+<!-- Home Tab -->
+<div id="home" class="tab active">
+  <div class="summary">
+    <p><strong>Fund Balance:</strong> <span id="fundBalance">0</span></p>
+    <p><strong>Total Interest:</strong> <span id="totalInterest">0</span></p>
+    <p><strong>Total Share Amount:</strong> <span id="totalShare">0</span></p>
+    <p><strong>Total Members:</strong> <span id="totalMembers">0</span></p>
+  </div>
+  <div class="chart-container">
+    <canvas id="summaryChart"></canvas>
+  </div>
+  <div class="table-wrapper">
+    <h1>ಗಣಪತಿ ಹುಂಡಿ ಚಿಟ್ ಫಂಡ್ ನಿಯಮಗಳು</h1>
+    <div class="note">
+      ಎಲ್ಲಾ ಸದಸ್ಯರ ಕೊಡುಗೆ ಮೊತ್ತವನ್ನು, ಮಾಸಿಕ ಮತ್ತು ಬಡ್ಡಿ ಮೊತ್ತವನ್ನು “ಗಣಪತಿ ಹುಂಡಿ”ಗೆ ಅರ್ಪಿಸಲಾಗಿದೆ ಎಂದು ಪರಿಗಣಿಸಲಾಗುತ್ತದೆ. ಈ ಹಣವನ್ನು ಯಾವುದೇ ಸಂದರ್ಭದಲ್ಲೂ ಹಿಂತಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ — ಅಂದರೆ, ಸದಸ್ಯರು ಗುಂಪನ್ನು ಬಿಟ್ಟುಹೋದರೂ ಸಹ, ಕೊಡುಗೆ ಹಿಂತಿರುಗಿಸಲಾಗುವುದಿಲ್ಲ.<br>
+      ಈ ಹಣವನ್ನು ಯಾವಾಗಲೂ ಗುಂಪಿನ ಒಟ್ಟಾರೆ ಹಣವೆಂದು ಪರಿಗಣಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ಯಾವುದೇ ಸಂದರ್ಭದಲ್ಲೂ ಸದಸ್ಯರಿಗೆ ವಿಭಜಿಸಲಾಗುವುದಿಲ್ಲ. ಹಣವನ್ನು ಸದಸ್ಯರ ಸಾಮೂಹಿಕ ನಿರ್ಧಾರಗಳ ಪ್ರಕಾರ ಮಾತ್ರ ಬಳಸಲಾಗುತ್ತದೆ. ಎಲ್ಲಾ ಲೆಕ್ಕಾಚಾರಗಳು ಸ್ಪಷ್ಟವಾಗಿ ದಾಖಲೆ ಮಾಡಬೇಕು ಮತ್ತು ಎಲ್ಲಾ ಸದಸ್ಯರಿಗೆ ಲಭ್ಯವಿರಬೇಕು.
+    </div>
+
+    <h2>1. ಸದಸ್ಯರ ಚಂದಾ ಮತ್ತು ಬಡ್ಡಿ</h2>
+    <ul>
+      <li>ಪ್ರತಿಯೊಬ್ಬ ಸದಸ್ಯರು ಪ್ರತಿ ತಿಂಗಳು ₹200 ಚಂದಾವನ್ನು ಕಟ್ಟಬೇಕು.</li>
+      <li>ಸಾಮಾನ್ಯ ಬಡ್ಡಿ ದರ: 5% ಪ್ರತಿ ತಿಂಗಳು.</li>
+      <li>ಈ ಎಲ್ಲಾ ಹಣ “ಗಣಪತಿ ಹುಂಡಿ”ಗೆ ಸೇರಿವೆ.</li>
+    </ul>
+
+    <h2>2. ಸಾಲ ನಿಯಮಗಳು</h2>
+    <ul>
+      <li>ಸದಸ್ಯನು ಲಭ್ಯವಿರುವ ಹಣದ ಪರಿಮಿತಿಯಲ್ಲಿ ಸಾಲ ಕೇಳಬಹುದು.</li>
+      <li>ಒಂದು ಸಾಲಕ್ಕೆ 2 ಜಾಮೀನುಗಾರರು ಇರಬೇಕು.</li>
+      <li>ಒಂದು ಸದಸ್ಯನು 3 ಸಾಲಗಳಿಗೆ ಮಾತ್ರ ಜಾಮೀನುಗಾರನಾಗಬಹುದು.</li>
+      <li>ಸಾಲ ಅವಧಿ: 1 ತಿಂಗಳು.</li>
+      <li>ಸಾಲದ ಮೂಲಧನ + ಬಡ್ಡಿಯನ್ನು ಮುಂದಿನ ತಿಂಗಳ ಸಭೆಯಲ್ಲೇ ಸಂಪೂರ್ಣವಾಗಿ ತೀರಿಸಬೇಕು.</li>
+      <li>ತಡ ಪಾವತಿ ಅಥವಾ ಭಾಗಶಃ ಪಾವತಿ, ಅಥವಾ ಜಾಮೀನುಗಾರರಿಂದ ಪಾವತಿ ಕೂಡಿರುವುದು “ಡೀಫಾಲ್ಟ್/ತಡ ಪಾವತಿ” ಎಂದು ಪರಿಗಣಿಸಲಾಗುತ್ತದೆ.</li>
+      <li>ಸಾಲಗಾರ ತೀರಿಸದಿದ್ದರೆ, ಜಾಮೀನುಗಾರರು ಸಂಪೂರ್ಣ ಹಣ (ಮೂಲ + ಬಡ್ಡಿ) ತೀರಿಸಬೇಕು.</li>
+      <li>ಜಾಮೀನುಗಾರರು ಪಾವತಿಸಿದ ನಂತರ, ಸಾಲಗಾರನು ಜಾಮೀನುಗಾರರಿಗೆ ಸಾಲಗಾರ ಆಗುತ್ತಾನೆ.</li>
+      <li>ತಡ ಪಾವತಿದಾರರು ಹೊಸ ಸಾಲ ಅಥವಾ ಜಾಮೀನುಗಾರರ ಹಕ್ಕನ್ನು ಕಳೆದುಕೊಳ್ಳುತ್ತಾರೆ.</li>
+    </ul>
+
+    <h2>3. ಸಾಲ ವಿನಂತಿ ನಿಯಮಗಳು</h2>
+    <ul>
+      <li>ಲಭ್ಯವಿರುವ ಹಣಕ್ಕಿಂತ ಹೆಚ್ಚು ಸದಸ್ಯರು ಒಂದೇ ಸಮಯದಲ್ಲಿ ಸಾಲ ಕೇಳಿದರೆ, ಹಣವನ್ನು ಸಮಾನವಾಗಿ ಹಂಚಿಕೊಳ್ಳಬೇಕು ಅಥವಾ ಪರಸ್ಪರ ಒಪ್ಪಂದ ಮಾಡಿಕೊಳ್ಳಬೇಕು.</li>
+      <li>ಎಲ್ಲಾ ಸಾಲ ವಿನಂತಿಗಳು ಲೆಕ್ಕಪತ್ರದಲ್ಲಿ ದಾಖಲೆ ಮಾಡಬೇಕು ಮತ್ತು ಸಭೆಯಲ್ಲಿ ದೃಢೀಕರಿಸಬೇಕು.</li>
+    </ul>
+
+    <h2>4. ಪಾವತಿ ಮತ್ತು ಲೆಕ್ಕಾಚಾರ</h2>
+    <ul>
+      <li>ಲೆಕ್ಕಾಚಾರ ಪ್ರತಿಯೊಂದು ಚಂದಾ, ಸಾಲ, ಬಡ್ಡಿ ಪಾವತಿ ಎಲ್ಲ ಸದಸ್ಯರಿಗೆ ಲಭ್ಯವಿರಬೇಕು.</li>
+      <li>ಲೆಕ್ಕಾಚಾರವನ್ನು ಸಭೆಯಲ್ಲಿ ಪರಿಶೀಲಿಸಲು ಅವಕಾಶ ಇರಬೇಕು.</li>
+    </ul>
+
+    <h2>5. ಪಾಲುಗಾರಿಕೆ / ಗುಂಪಿನ ನಿರ್ಧಾರ</h2>
+    <ul>
+      <li>ಹಣವನ್ನು ಸದಸ್ಯರ ಸಾಮೂಹಿಕ ನಿರ್ಧಾರದಿಂದ ಮಾತ್ರ ಬಳಸಬಹುದು.</li>
+      <li>ಹಣವನ್ನು ಕೇವಲ ಚಿಟ್ ಫಂಡ್ ನಿರ್ವಹಣೆ, ಸಾಲ ವಿತರಣಾ ಚಟುವಟಿಕೆಗಳು ಮತ್ತು ಸದಸ್ಯರ ಒಪ್ಪಿಗೆ ಬರುವ ಅಗಶ್ಯಕತೆಗಳಿಗೆ ಮಾತ್ರ ಬಳಸಬಹುದು.</li>
+      <li>ನಿಯಮಗಳಲ್ಲಿ ಯಾವುದೇ ಬದಲಾವಣೆ ತರಲು ಬಹುಮತ ಸದಸ್ಯರ ಅನುಮತಿ ಅಗತ್ಯ.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Contributions Tab -->
+<div id="contributions" class="tab">
+  <h2>Contributions</h2>
+  <div class="table-wrapper">
+    <table id="contributionsTable"></table>
+  </div>
+</div>
+
+<!-- Loan Ledger Tab -->
+<div id="loanLedger" class="tab">
+  <h2>Loan Ledger</h2>
+  <div class="table-wrapper">
+    <table id="loanLedgerTable"></table>
+  </div>
+</div>
+
+<!-- Balance Sheet Tab -->
+<div id="balanceSheet" class="tab">
+  <h2>Balance Sheet</h2>
+  <div class="table-wrapper">
+    <table id="balanceSheetTable"></table>
+  </div>
+</div>
+
+<script>
+  function showTab(tabId) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-btn'));
+    event.target.classList.add('active-btn');
+  }
+
+  function formatDateToDDMMYYYY(d) {
+    if (!(d instanceof Date)) return d;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return dd + '-' + mm + '-' + yyyy;
+  }
+
+  // Load the Excel file
+  fetch("data.xlsx")
+          .then(res => res.arrayBuffer())
+          .then(data => {
+            const workbook = XLSX.read(data, { type: "array" });
+
+            // Contributions sheet
+            const contribSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Contributions"], { header: 1 });
+            populateTable("contributionsTable", contribSheet);
+
+            // Loan Ledger sheet
+            const loanLedgerSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Loan Ledger"], { header: 1 });
+            populateTable("loanLedgerTable", loanLedgerSheet);
+
+            // Balance Sheet sheet
+            const balanceSheet = XLSX.utils.sheet_to_json(workbook.Sheets["Balance Sheet"], { header: 1 });
+            populateTable("balanceSheetTable", balanceSheet);
+
+            // Summary Calculations
+            // let fundBalance = contribSheet.slice(1).reduce((sum, row) => sum + (parseFloat(row[2]) || 0), 0);
+            // let totalMembers = contribSheet.slice(1).filter(r => r[1]).length;
+            // let totalInterest = balanceSheet.slice(1).reduce((sum, row) => sum + (parseFloat(row[3]) || 0), 0);
+            // let totalShare = balanceSheet.slice(1).reduce((sum, row) => sum + (parseFloat(row[4]) || 0), 0);
+            let fundBalance = 81000;
+            let totalMembers = 35;
+            let totalInterest = 0;
+            let totalShare = 0;
+            document.getElementById("fundBalance").textContent = fundBalance.toLocaleString();
+            document.getElementById("totalInterest").textContent = totalInterest.toLocaleString();
+            document.getElementById("totalShare").textContent = totalShare.toLocaleString();
+            document.getElementById("totalMembers").textContent = totalMembers;
+
+            // Chart
+            new Chart(document.getElementById("summaryChart"), {
+              type: "bar", // You can switch to "bar"
+              data: {
+                labels: ["Fund Balance", "Total Interest", "Total Share"],
+                datasets: [{
+                  data: [fundBalance, totalInterest, totalShare],
+                  backgroundColor: ["#4CAF50", "#2196F3", "#FFC107"]
+                }]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: { position: "bottom" }
+                }
+              }
+            });
+          });
+
+  function populateTable(tableId, data) {
+    const table = document.getElementById(tableId);
+    table.innerHTML = "";
+    data.forEach((row, i) => {
+      const tr = document.createElement("tr");
+      row.forEach(cell => {
+        const cellElem = document.createElement(i === 0 ? "th" : "td");
+        cellElem.textContent = cell;
+        tr.appendChild(cellElem);
+      });
+      table.appendChild(tr);
+    });
+  }
+</script>
+</body>
+</html>
